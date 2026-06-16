@@ -85,10 +85,36 @@
     color: #fff;
   }
 
+  .filter-btn[data-dot] {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .filter-btn .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    box-shadow: 0 0 0 1.5px #fff;
+  }
+
   #map {
     width: 100%;
-    height: 68vh;
-    min-height: 420px;
+    height: 70vh;
+    min-height: 460px;
+  }
+
+  .marker-label {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.94);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    transform: translate(-50%, 4px);
+    pointer-events: none;
   }
 
   .list-wrap {
@@ -199,11 +225,10 @@
 
 <div class="guide-label">장소를 눌러 위치와 정보를 확인하세요</div>
 
-<div class="filters" id="filters"></div>
-
 <div class="page">
   <div id="map"></div>
   <div class="list-wrap">
+    <div class="filters" id="filters"></div>
     <h2>장소 목록</h2>
     <div id="placeList"></div>
   </div>
@@ -269,7 +294,14 @@
     }
   ];
 
-  const filterTypes = ["전체", "해변", "산책로", "공원", "다리", "케이블카"];
+  const filterTypes = [
+    { label: "전체", color: null },
+    { label: "해변", color: "#3f7ea6" },
+    { label: "산책로", color: "#3f9a6a" },
+    { label: "공원", color: "#6a9a3f" },
+    { label: "다리", color: "#a66b3f" },
+    { label: "케이블카", color: "#9a3f7e" }
+  ];
 
   const map = L.map('map', { scrollWheelZoom: false }).setView([35.0690, 129.0190], 14);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -279,15 +311,22 @@
 
   let currentMarkers = [];
 
-  function makeIcon(color) {
+  function makeIcon(color, name) {
     return L.divIcon({
       className: 'custom-pin',
-      html: `<div style="
-        width:26px; height:26px; border-radius:50% 50% 50% 0;
-        background:${color}; transform:rotate(-45deg);
-        border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.35);
-      "></div>`,
-      iconSize: [26, 26],
+      html: `
+        <div style="position:relative;">
+          <div style="
+            width:26px; height:26px; border-radius:50% 50% 50% 0;
+            background:${color}; transform:rotate(-45deg);
+            border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.35);
+          "></div>
+          <div class="marker-label" style="
+            position:absolute; left:13px; top:28px; border:1.5px solid ${color};
+          ">${name}</div>
+        </div>
+      `,
+      iconSize: [120, 50],
       iconAnchor: [13, 26],
       popupAnchor: [0, -24]
     });
@@ -315,7 +354,7 @@
     clearMarkers();
     const bounds = [];
     filtered.forEach(p => {
-      const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p.typeColor) })
+      const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p.typeColor, p.name) })
         .addTo(map)
         .bindPopup(popupHtml(p));
       currentMarkers.push(marker);
@@ -359,14 +398,19 @@
 
   function buildFilterButtons() {
     const wrap = document.getElementById('filters');
-    filterTypes.forEach((type, idx) => {
+    filterTypes.forEach((f, idx) => {
       const btn = document.createElement('button');
       btn.className = 'filter-btn' + (idx === 0 ? ' active' : '');
-      btn.textContent = type;
+      if (f.color) {
+        btn.setAttribute('data-dot', '1');
+        btn.innerHTML = `<span class="dot" style="background:${f.color};"></span>${f.label}`;
+      } else {
+        btn.textContent = f.label;
+      }
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        applyFilter(type);
+        applyFilter(f.label);
       });
       wrap.appendChild(btn);
     });
