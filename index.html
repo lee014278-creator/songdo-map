@@ -173,13 +173,13 @@
     },
     {
       id: 2,
-      name: "거북섬 구름산책로",
+      name: "송도구름산책로",
       type: "산책로",
       color: "#3f9a6a",
       lat: 35.0759,
       lng: 129.0216,
-      desc: "해안 데크길, 투명 바닥 구간이 있는 산책로",
-      naverUrl: "https://map.naver.com/p/search/거북섬 구름산책로",
+      desc: "거북섬을 잇는 365m 해상 산책로, 투명 강화유리 구간 있음",
+      naverUrl: "https://map.naver.com/p/search/송도구름산책로",
       isSearchLink: true
     },
     {
@@ -187,8 +187,8 @@
       name: "암남공원",
       type: "공원",
       color: "#6a9a3f",
-      lat: 35.0609,
-      lng: 129.0161,
+      lat: 35.0616,
+      lng: 129.0205,
       desc: "해안 생태공원, 산책로와 전망대",
       naverUrl: "https://map.naver.com/p/search/암남공원",
       isSearchLink: true
@@ -209,8 +209,8 @@
       name: "송도해상케이블카",
       type: "케이블카",
       color: "#9a3f7e",
-      lat: 35.0759,
-      lng: 129.0216,
+      lat: 35.0764,
+      lng: 129.0236,
       desc: "거북섬과 암남공원(스카이파크)을 잇는 케이블카",
       naverUrl: "https://map.naver.com/p/search/송도해상케이블카",
       isSearchLink: true
@@ -275,6 +275,14 @@
   function renderButtons() {
     const wrap = document.getElementById('placeButtons');
     wrap.innerHTML = '';
+
+    const allBtn = document.createElement('button');
+    allBtn.className = 'place-btn active';
+    allBtn.id = 'btn-all';
+    allBtn.textContent = '전체보기';
+    allBtn.addEventListener('click', showAll);
+    wrap.appendChild(allBtn);
+
     places.forEach(p => {
       const btn = document.createElement('button');
       btn.className = 'place-btn';
@@ -283,6 +291,13 @@
       btn.addEventListener('click', () => selectPlace(p.id));
       wrap.appendChild(btn);
     });
+  }
+
+  function showAll() {
+    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+    document.querySelectorAll('.place-btn').forEach(b => b.classList.remove('active'));
+    const allBtn = document.getElementById('btn-all');
+    if (allBtn) allBtn.classList.add('active');
   }
 
   function selectPlace(id) {
