@@ -55,53 +55,14 @@
     border-radius: 999px;
   }
 
-  .filters {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 0 14px 10px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .filters::-webkit-scrollbar { display: none; }
-
-  .filter-btn {
-    flex: 0 0 auto;
-    padding: 10px 16px;
-    border-radius: 999px;
-    border: 1.5px solid var(--brown-light);
-    background: #fff;
-    color: var(--brown-dark);
-    font-size: 14px;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-  }
-
-  .filter-btn.active {
-    background: var(--brown);
-    border-color: var(--brown);
-    color: #fff;
-  }
-
-  .filter-btn[data-dot] {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .filter-btn .dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    flex: 0 0 auto;
-    box-shadow: 0 0 0 1.5px #fff;
-  }
-
+  /* 지도는 화면에 고정, 스크롤해도 같은 자리에 머문다 */
   #map {
     width: 100%;
-    height: 70vh;
-    min-height: 460px;
+    height: 60vh;
+    min-height: 380px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
 
   .marker-label {
@@ -117,8 +78,50 @@
     pointer-events: none;
   }
 
+  .place-buttons {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px 14px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: var(--bg);
+    position: relative;
+    z-index: 2;
+  }
+  .place-buttons::-webkit-scrollbar { display: none; }
+
+  .place-btn {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--brown-light);
+    background: #fff;
+    color: var(--brown-dark);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .place-btn .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+
+  .place-btn.active {
+    background: var(--brown-dark);
+    border-color: var(--brown-dark);
+    color: #fff;
+  }
+
   .list-wrap {
-    padding: 14px 14px 30px;
+    padding: 4px 14px 30px;
   }
 
   .list-wrap h2 {
@@ -133,6 +136,12 @@
     box-shadow: var(--card-shadow);
     padding: 14px 16px;
     margin-bottom: 10px;
+    border-left: 5px solid transparent;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .place-card.highlight {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.16);
   }
 
   .place-card .pname {
@@ -145,8 +154,7 @@
   .place-card .ptype {
     display: inline-block;
     font-size: 11px;
-    color: var(--brown);
-    background: var(--beige);
+    color: #fff;
     padding: 2px 8px;
     border-radius: 999px;
     margin-bottom: 6px;
@@ -199,19 +207,8 @@
   }
 
   @media (min-width: 860px) {
-    .page {
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-    }
     #map {
-      height: 82vh;
-      flex: 1 1 65%;
-    }
-    .list-wrap {
-      flex: 1 1 35%;
-      max-height: 82vh;
-      overflow-y: auto;
+      height: 80vh;
     }
   }
 </style>
@@ -225,13 +222,13 @@
 
 <div class="guide-label">장소를 눌러 위치와 정보를 확인하세요</div>
 
-<div class="page">
-  <div id="map"></div>
-  <div class="list-wrap">
-    <div class="filters" id="filters"></div>
-    <h2>장소 목록</h2>
-    <div id="placeList"></div>
-  </div>
+<div id="map"></div>
+
+<div class="place-buttons" id="placeButtons"></div>
+
+<div class="list-wrap">
+  <h2>장소 목록</h2>
+  <div id="placeList"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -241,7 +238,7 @@
       id: 1,
       name: "송도해수욕장",
       type: "해변",
-      typeColor: "#3f7ea6",
+      color: "#3f7ea6",
       lat: 35.0755,
       lng: 129.0168,
       desc: "1913년 개장한 국내 첫 공설 해수욕장",
@@ -252,7 +249,7 @@
       id: 2,
       name: "거북섬 구름산책로",
       type: "산책로",
-      typeColor: "#3f9a6a",
+      color: "#3f9a6a",
       lat: 35.0759,
       lng: 129.0216,
       desc: "해안 데크길, 투명 바닥 구간이 있는 산책로",
@@ -263,7 +260,7 @@
       id: 3,
       name: "암남공원",
       type: "공원",
-      typeColor: "#6a9a3f",
+      color: "#6a9a3f",
       lat: 35.0609,
       lng: 129.0161,
       desc: "해안 생태공원, 산책로와 전망대",
@@ -274,7 +271,7 @@
       id: 4,
       name: "송도용궁구름다리",
       type: "다리",
-      typeColor: "#a66b3f",
+      color: "#a66b3f",
       lat: 35.0619,
       lng: 129.0222,
       desc: "바다 위로 이어지는 해상 구름다리",
@@ -285,7 +282,7 @@
       id: 5,
       name: "송도해상케이블카",
       type: "케이블카",
-      typeColor: "#9a3f7e",
+      color: "#9a3f7e",
       lat: 35.0759,
       lng: 129.0216,
       desc: "거북섬과 암남공원(스카이파크)을 잇는 케이블카",
@@ -294,22 +291,13 @@
     }
   ];
 
-  const filterTypes = [
-    { label: "전체", color: null },
-    { label: "해변", color: "#3f7ea6" },
-    { label: "산책로", color: "#3f9a6a" },
-    { label: "공원", color: "#6a9a3f" },
-    { label: "다리", color: "#a66b3f" },
-    { label: "케이블카", color: "#9a3f7e" }
-  ];
-
   const map = L.map('map', { scrollWheelZoom: false }).setView([35.0690, 129.0190], 14);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  let currentMarkers = [];
+  const markerById = {};
 
   function makeIcon(color, name) {
     return L.divIcon({
@@ -332,11 +320,6 @@
     });
   }
 
-  function clearMarkers() {
-    currentMarkers.forEach(m => map.removeLayer(m));
-    currentMarkers = [];
-  }
-
   function popupHtml(p) {
     let html = `<b>${p.name}</b><br/>`;
     html += `<span style="color:#888;">${p.type}</span><br/>`;
@@ -350,74 +333,80 @@
     return html;
   }
 
-  function renderMarkers(filtered) {
-    clearMarkers();
-    const bounds = [];
-    filtered.forEach(p => {
-      const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p.typeColor, p.name) })
-        .addTo(map)
-        .bindPopup(popupHtml(p));
-      currentMarkers.push(marker);
-      bounds.push([p.lat, p.lng]);
+  // 5개 장소를 항상 전체 표시 (필터 없음, 고정 지도)
+  const bounds = [];
+  places.forEach(p => {
+    const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p.color, p.name) })
+      .addTo(map)
+      .bindPopup(popupHtml(p));
+    marker.on('click', () => selectPlace(p.id));
+    markerById[p.id] = marker;
+    bounds.push([p.lat, p.lng]);
+  });
+  map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+
+  function renderButtons() {
+    const wrap = document.getElementById('placeButtons');
+    wrap.innerHTML = '';
+    places.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'place-btn';
+      btn.id = 'btn-' + p.id;
+      btn.innerHTML = `<span class="dot" style="background:${p.color};"></span>${p.name}`;
+      btn.addEventListener('click', () => selectPlace(p.id));
+      wrap.appendChild(btn);
     });
-    if (bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
-    }
   }
 
-  function renderList(filtered) {
+  function renderList() {
     const listEl = document.getElementById('placeList');
     listEl.innerHTML = '';
-    filtered.forEach(p => {
+    places.forEach(p => {
       const card = document.createElement('div');
       card.className = 'place-card';
+      card.id = 'card-' + p.id;
+      card.style.borderLeftColor = p.color;
       card.innerHTML = `
         <div class="pname">${p.name}</div>
-        <div class="ptype" style="color:${p.typeColor};">${p.type}</div>
+        <div class="ptype" style="background:${p.color};">${p.type}</div>
         <div class="pdesc">${p.desc}</div>
         <a class="naver-btn" href="${p.naverUrl}" target="_blank" rel="noopener">네이버지도 검색 바로가기</a>
       `;
       card.addEventListener('click', (e) => {
         if (e.target.tagName === 'A') return;
-        map.setView([p.lat, p.lng], 17);
-        const marker = currentMarkers.find(m => {
-          const ll = m.getLatLng();
-          return ll.lat === p.lat && ll.lng === p.lng;
-        });
-        if (marker) marker.openPopup();
+        selectPlace(p.id);
       });
       listEl.appendChild(card);
     });
   }
 
-  function applyFilter(type) {
-    const filtered = type === "전체" ? places : places.filter(p => p.type === type);
-    renderMarkers(filtered);
-    renderList(filtered);
+  function selectPlace(id) {
+    const p = places.find(pl => pl.id === id);
+    if (!p) return;
+
+    // 지도 시점 이동 (지도 자체는 화면에서 고정 위치, 보여주는 위치만 바뀜)
+    map.setView([p.lat, p.lng], 17);
+    const marker = markerById[id];
+    if (marker) marker.openPopup();
+
+    // 버튼 활성 표시
+    document.querySelectorAll('.place-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.getElementById('btn-' + id);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // 해당 장소 카드를 목록 맨 위로 이동
+    const listEl = document.getElementById('placeList');
+    const card = document.getElementById('card-' + id);
+    if (card) {
+      listEl.prepend(card);
+      document.querySelectorAll('.place-card').forEach(c => c.classList.remove('highlight'));
+      card.classList.add('highlight');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
-  function buildFilterButtons() {
-    const wrap = document.getElementById('filters');
-    filterTypes.forEach((f, idx) => {
-      const btn = document.createElement('button');
-      btn.className = 'filter-btn' + (idx === 0 ? ' active' : '');
-      if (f.color) {
-        btn.setAttribute('data-dot', '1');
-        btn.innerHTML = `<span class="dot" style="background:${f.color};"></span>${f.label}`;
-      } else {
-        btn.textContent = f.label;
-      }
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        applyFilter(f.label);
-      });
-      wrap.appendChild(btn);
-    });
-  }
-
-  buildFilterButtons();
-  applyFilter("전체");
+  renderButtons();
+  renderList();
 </script>
 
 </body>
