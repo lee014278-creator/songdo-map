@@ -1,320 +1,644 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>부산 송도 해안산책로 명소 지도</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-  :root {
-    --bg: #fffdf9;
-    --beige: #f3ead9;
-    --brown-light: #e6d4ba;
-    --brown: #8b6f47;
-    --brown-dark: #5c4630;
-    --text: #4a3f33;
-    --map-h: 64vh;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>부산 송도 해안산책로 명소 지도</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 
-  * { box-sizing: border-box; }
+  <style>
+    :root {
+      --bg:#fffdf9;
+      --card:#ffffff;
+      --text:#3f352b;
+      --muted:#756858;
+      --line:#eadcc8;
+      --soft:#f3ead9;
+      --soft2:#e6d4ba;
+      --point:#8b6f47;
+      --dark:#5c4630;
+    }
 
-  html, body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-  }
+    * { box-sizing:border-box; }
 
-  header {
-    padding: 12px 16px 6px;
-    text-align: center;
-  }
+    html, body {
+      margin:0;
+      padding:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+      line-height:1.42;
+    }
 
-  header h1 {
-    margin: 0 0 4px;
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--brown-dark);
-  }
+    .wrap {
+      width:min(1120px,100%);
+      margin:0 auto;
+      padding:5px 7px 14px;
+    }
 
-  header p {
-    margin: 0;
-    font-size: 12.5px;
-    color: #7a6a57;
-  }
+    .head {
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:4px 7px;
+      margin-bottom:4px;
+    }
 
-  .guide-label {
-    margin: 8px auto 8px;
-    max-width: 92%;
-    text-align: center;
-    background: var(--beige);
-    color: var(--brown-dark);
-    font-size: 12.5px;
-    font-weight: 700;
-    padding: 7px 14px;
-    border-radius: 999px;
-  }
+    .head h1 {
+      margin:0;
+      font-size:clamp(12px,2.2vw,16px);
+      letter-spacing:-.04em;
+      line-height:1.2;
+      color:var(--dark);
+    }
 
-  #map {
-    width: 100%;
-    height: var(--map-h);
-    min-height: 360px;
-  }
+    .head p {
+      margin:1px 0 0;
+      color:var(--muted);
+      font-size:10px;
+    }
 
-  .marker-label {
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--text);
-    white-space: nowrap;
-    padding: 2px 6px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.96);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-    transform: translate(-50%, 4px);
-    pointer-events: none;
-  }
+    .filters {
+      display:flex;
+      gap:5px;
+      overflow-x:auto;
+      padding:2px 0 5px;
+      -webkit-overflow-scrolling:touch;
+    }
 
-  .place-buttons {
-    display: flex;
-    gap: 7px;
-    overflow-x: auto;
-    padding: 10px 12px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    border-top: 1px solid var(--brown-light);
-  }
-  .place-buttons::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      flex:0 0 auto;
+      border:1px solid var(--soft2);
+      background:#fffaf2;
+      color:var(--text);
+      border-radius:999px;
+      padding:4px 8px;
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+      line-height:1.15;
+    }
 
-  .place-btn {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 9px 14px;
-    border-radius: 999px;
-    border: 1.5px solid var(--brown-light);
-    background: #fff;
-    color: var(--brown-dark);
-    font-size: 13.5px;
-    font-weight: 700;
-    white-space: nowrap;
-    cursor: pointer;
-  }
+    .filter-btn.active {
+      background:var(--point);
+      color:#fff;
+      border-color:var(--point);
+    }
 
-  .place-btn .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex: 0 0 auto;
-  }
+    .map-box {
+      position:relative;
+      height:310px;
+      min-height:310px;
+      max-height:310px;
+      overflow:hidden;
+      border-radius:15px;
+      border:1px solid var(--line);
+      background:#efe5d8;
+      box-shadow:0 8px 20px rgba(72,52,32,.13);
+    }
 
-  .place-btn.active {
-    background: var(--brown-dark);
-    border-color: var(--brown-dark);
-    color: #fff;
-  }
+    #map {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      background:#efe5d8;
+      z-index:1;
+    }
 
-  .leaflet-popup-content {
-    font-family: inherit;
-    font-size: 13.5px;
-    line-height: 1.5;
-    min-width: 190px;
-  }
-  .leaflet-popup-content b {
-    font-size: 15px;
-    color: var(--brown-dark);
-  }
-  .leaflet-popup-content .popup-naver {
-    display: inline-block;
-    margin-top: 8px;
-    background: var(--brown);
-    color: #fff;
-    padding: 7px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 13px;
-  }
-  .leaflet-popup-content .popup-search-note {
-    font-size: 11px;
-    color: #999;
-    display: block;
-    margin-top: 2px;
-  }
+    .leaflet-container {
+      font-family:inherit;
+      cursor:default !important;
+    }
 
-  @media (min-width: 860px) {
-    :root { --map-h: 78vh; }
-  }
-</style>
+    .leaflet-control-attribution {
+      font-size:9px;
+    }
+
+    .map-guide {
+      position:absolute;
+      left:8px;
+      top:8px;
+      z-index:800;
+      background:rgba(255,250,242,.96);
+      border:1px solid var(--soft2);
+      color:var(--dark);
+      border-radius:999px;
+      padding:4px 8px;
+      font-size:11px;
+      font-weight:900;
+      pointer-events:none;
+      box-shadow:0 4px 12px rgba(74,54,35,.12);
+    }
+
+    .marker-shell {
+      position:relative;
+      width:170px;
+      height:64px;
+    }
+
+    .pin {
+      position:absolute;
+      left:71px;
+      top:18px;
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--point);
+      color:#fff;
+      font-size:13px;
+      font-weight:900;
+      border:3px solid #fff;
+      box-shadow:0 4px 12px rgba(64,41,22,.25);
+      z-index:3;
+    }
+
+    .label {
+      position:absolute;
+      min-height:23px;
+      max-width:150px;
+      padding:4px 7px;
+      border-radius:999px;
+      background:rgba(255,250,242,.98);
+      border:1px solid #e3d0b7;
+      color:var(--dark);
+      font-size:11px;
+      font-weight:900;
+      line-height:1.15;
+      white-space:nowrap;
+      box-shadow:0 4px 12px rgba(64,41,22,.14);
+      z-index:2;
+    }
+
+    .marker-shell.selected .pin {
+      width:32px;
+      height:32px;
+      left:69px;
+      top:16px;
+      background:var(--dark);
+      font-size:14px;
+    }
+
+    .marker-shell.selected .label {
+      background:#fff;
+      border-color:var(--point);
+    }
+
+    /* 실제 좌표 마커 기준 라벨 위치 */
+    .m1 .label { right:96px; top:20px; }       /* 1 송도해수욕장: 왼쪽 */
+    .m2 .label { right:96px; top:-2px; }         /* 2 구름산책로: 오른쪽 위 */
+    .m3 .label { right:96px; top:20px; }       /* 3 암남공원: 왼쪽 아래 */
+    .m4 .label { left:96px; top:36px; }         /* 4 용궁구름다리: 오른쪽 위 */
+    .m5 .label { left:96px; top:36px; }        /* 5 해상케이블카: 오른쪽 아래 */
+
+    .cards {
+      margin-top:7px;
+    }
+
+    .cards h2 {
+      margin:0 0 5px;
+      font-size:16px;
+      letter-spacing:-.03em;
+    }
+
+    .list {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .card {
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:9px;
+      box-shadow:0 5px 14px rgba(74,54,35,.07);
+      cursor:pointer;
+    }
+
+    .card.selected {
+      order:-1;
+      border:2px solid var(--point);
+      box-shadow:0 8px 18px rgba(74,54,35,.16);
+    }
+
+    .top {
+      display:flex;
+      gap:7px;
+      align-items:flex-start;
+    }
+
+    .card-num {
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--point);
+      color:#fff;
+      font-size:13px;
+      font-weight:900;
+      flex:0 0 auto;
+    }
+
+    .name {
+      margin:0;
+      font-size:15px;
+      letter-spacing:-.04em;
+      line-height:1.25;
+    }
+
+    .desc {
+      margin:2px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .btn-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:7px;
+    }
+
+    .link {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:30px;
+      padding:6px 9px;
+      border-radius:10px;
+      text-decoration:none;
+      font-size:12px;
+      font-weight:900;
+      background:var(--soft);
+      color:var(--dark);
+      border:1px solid var(--soft2);
+    }
+
+    .link.primary {
+      background:var(--point);
+      color:#fff;
+      border-color:var(--point);
+    }
+
+    .note {
+      margin:8px 2px 0;
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    .load-error {
+      display:none;
+      margin-top:8px;
+      padding:12px;
+      background:#fff7ec;
+      border:1px solid #e3c8a4;
+      border-radius:12px;
+      color:var(--dark);
+      font-weight:800;
+      font-size:13px;
+    }
+
+    @media (max-width:720px) {
+      .wrap { padding:5px 6px 14px; }
+
+      .map-box {
+        height:300px;
+        min-height:300px;
+        max-height:300px;
+      }
+
+      .filter-btn {
+        padding:4px 7px;
+        font-size:13px;
+      }
+
+      .marker-shell {
+        width:170px;
+        height:70px;
+      }
+
+      .pin {
+        left:71px;
+        top:21px;
+      }
+
+      .marker-shell.selected .pin {
+        left:69px;
+        top:19px;
+      }
+
+      .label {
+        max-width:130px;
+        font-size:10px;
+        padding:4px 6px;
+      }
+
+      .m1 .label { right:98px; top:24px; }
+      .m2 .label { right:98px; top:2px; }
+      .m3 .label { right:98px; top:20px; }
+      .m4 .label { left:98px; top:38px; }
+      .m5 .label { left:98px; top:42px; }
+
+      .list {
+        grid-template-columns:1fr;
+        gap:7px;
+      }
+
+      .card {
+        padding:8px;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <main class="wrap">
+    <section class="head">
+      <h1>부산 송도 해안산책로 명소 지도</h1>
+      <p>송도해수욕장부터 케이블카·암남공원까지 한눈에 확인하세요.</p>
+    </section>
 
-<header>
-  <h1>부산 송도 해안산책로 명소 지도</h1>
-  <p>해수욕장부터 케이블카까지, 한눈에 보는 송도 코스</p>
-</header>
-<div class="guide-label">장소를 눌러 위치와 정보를 확인하세요</div>
-<div id="map"></div>
-<div class="place-buttons" id="placeButtons"></div>
+    <nav class="filters" id="filters" aria-label="장소 필터"></nav>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-  const places = [
-    {
-      id: 1,
-      name: "송도해수욕장",
-      type: "해변",
-      color: "#3f7ea6",
-      lat: 35.0755,
-      lng: 129.0168,
-      desc: "1913년 개장한 국내 첫 공설 해수욕장",
-      naverUrl: "https://map.naver.com/p/search/송도해수욕장",
-      isSearchLink: true
-    },
-    {
-      id: 2,
-      name: "송도구름산책로",
-      type: "산책로",
-      color: "#3f9a6a",
-      lat: 35.0759,
-      lng: 129.0216,
-      desc: "거북섬을 잇는 365m 해상 산책로, 투명 강화유리 구간 있음",
-      naverUrl: "https://map.naver.com/p/search/송도구름산책로",
-      isSearchLink: true
-    },
-    {
-      id: 3,
-      name: "암남공원",
-      type: "공원",
-      color: "#6a9a3f",
-      lat: 35.0616,
-      lng: 129.0205,
-      desc: "해안 생태공원, 산책로와 전망대",
-      naverUrl: "https://map.naver.com/p/search/암남공원",
-      isSearchLink: true
-    },
-    {
-      id: 4,
-      name: "송도용궁구름다리",
-      type: "다리",
-      color: "#a66b3f",
-      lat: 35.0619,
-      lng: 129.0222,
-      desc: "바다 위로 이어지는 해상 구름다리",
-      naverUrl: "https://map.naver.com/p/search/송도용궁구름다리",
-      isSearchLink: true
-    },
-    {
-      id: 5,
-      name: "송도해상케이블카",
-      type: "케이블카",
-      color: "#9a3f7e",
-      lat: 35.0764,
-      lng: 129.0236,
-      desc: "거북섬과 암남공원(스카이파크)을 잇는 케이블카",
-      naverUrl: "https://map.naver.com/p/search/송도해상케이블카",
-      isSearchLink: true
+    <section class="map-box" aria-label="부산 송도 해안산책로 명소 지도">
+      <div id="map"></div>
+      <div class="map-guide">번호를 눌러보세요</div>
+    </section>
+
+    <div class="load-error" id="loadError">지도가 뜨지 않으면 새로고침해 주세요.</div>
+
+    <section class="cards">
+      <h2>장소 목록</h2>
+      <div class="list" id="placeList"></div>
+      <p class="note">네이버지도는 장소 검색 링크로 연결됩니다. 주소 표기는 카드에서 제외했습니다.</p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const filters = [
+      { key:"all", label:"전체" },
+      { key:"beach", label:"해수욕장·산책로" },
+      { key:"view", label:"전망·체험" },
+      { key:"park", label:"암남공원권" }
+    ];
+
+    const places = [
+      {
+        id:"songdo-beach",
+        no:1,
+        markerClass:"m1",
+        name:"송도해수욕장",
+        short:"송도해수욕장",
+        lat:35.0755,
+        lng:129.0168,
+        displayLat:35.0755,
+        displayLng:129.0149,
+        desc:"1913년 개장한 국내 첫 공설 해수욕장입니다.",
+        cats:["beach"],
+        naverUrl:"https://map.naver.com/p/search/송도해수욕장",
+        info:""
+      },
+      {
+        id:"cloud-walk",
+        no:2,
+        markerClass:"m2",
+        name:"송도구름산책로",
+        short:"송도구름산책로",
+        lat:35.0759,
+        lng:129.0216,
+        displayLat:35.0786,
+        displayLng:129.0190,
+        desc:"거북섬을 잇는 해상 산책로로 바다 전망을 즐기기 좋습니다.",
+        cats:["beach","view"],
+        naverUrl:"https://map.naver.com/p/search/송도구름산책로",
+        info:""
+      },
+      {
+        id:"amnam-park",
+        no:3,
+        markerClass:"m3",
+        name:"암남공원",
+        short:"암남공원",
+        lat:35.0616,
+        lng:129.0205,
+        displayLat:35.0609,
+        displayLng:129.0186,
+        desc:"해안 산책로와 전망을 함께 즐길 수 있는 공원입니다.",
+        cats:["park","view"],
+        naverUrl:"https://map.naver.com/p/search/암남공원",
+        info:""
+      },
+      {
+        id:"yonggung-bridge",
+        no:4,
+        markerClass:"m4",
+        name:"송도용궁구름다리",
+        short:"용궁구름다리",
+        lat:35.0619,
+        lng:129.0222,
+        displayLat:35.0626,
+        displayLng:129.0239,
+        desc:"바다 위로 이어지는 송도 대표 해상 구름다리입니다.",
+        cats:["park","view"],
+        naverUrl:"https://map.naver.com/p/search/송도용궁구름다리",
+        info:""
+      },
+      {
+        id:"marine-cablecar",
+        no:5,
+        markerClass:"m5",
+        name:"송도해상케이블카",
+        short:"송도해상케이블카",
+        lat:35.0764,
+        lng:129.0236,
+        displayLat:35.0764,
+        displayLng:129.0261,
+        desc:"송도해수욕장과 암남공원 스카이파크를 잇는 케이블카입니다.",
+        cats:["beach","view"],
+        naverUrl:"https://map.naver.com/p/search/송도해상케이블카",
+        info:""
+      }
+    ];
+
+    let map;
+    let markerLayer;
+    let currentFilter = "all";
+    let selectedId = "songdo-beach";
+
+    const filtersEl = document.getElementById("filters");
+    const placeList = document.getElementById("placeList");
+
+    function visiblePlaces() {
+      return currentFilter === "all" ? places : places.filter(p => p.cats.includes(currentFilter));
     }
-  ];
 
-  const map = L.map('map', { scrollWheelZoom: false });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  const markerById = {};
-
-  function makeIcon(color, name) {
-    return L.divIcon({
-      className: 'custom-pin',
-      html: `
-        <div style="position:relative;">
-          <div style="
-            width:24px; height:24px; border-radius:50% 50% 50% 0;
-            background:${color}; transform:rotate(-45deg);
-            border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.35);
-          "></div>
-          <div class="marker-label" style="
-            position:absolute; left:12px; top:26px; border:1.5px solid ${color};
-          ">${name}</div>
-        </div>
-      `,
-      iconSize: [110, 46],
-      iconAnchor: [12, 24],
-      popupAnchor: [0, -22]
-    });
-  }
-
-  function popupHtml(p) {
-    let html = `<b>${p.name}</b><br/>`;
-    html += `<span style="color:#888;">${p.type}</span><br/>`;
-    html += `<span>${p.desc}</span><br/>`;
-    if (p.isSearchLink) {
-      html += `<a class="popup-naver" href="${p.naverUrl}" target="_blank" rel="noopener">네이버지도 검색 바로가기</a>`;
-      html += `<span class="popup-search-note">※ 정확한 장소 링크가 아닌 검색 결과로 연결됩니다</span>`;
-    } else {
-      html += `<a class="popup-naver" href="${p.naverUrl}" target="_blank" rel="noopener">네이버지도 바로가기</a>`;
+    function selectedPlace() {
+      return places.find(p => p.id === selectedId) || visiblePlaces()[0] || places[0];
     }
-    return html;
-  }
 
-  const bounds = [];
-  places.forEach(p => {
-    const marker = L.marker([p.lat, p.lng], { icon: makeIcon(p.color, p.name) })
-      .addTo(map)
-      .bindPopup(popupHtml(p));
-    marker.on('click', () => selectPlace(p.id));
-    markerById[p.id] = marker;
-    bounds.push([p.lat, p.lng]);
-  });
+    function linkButtons(place) {
+      return `
+        <a class="link primary" href="${place.naverUrl}" target="_blank" rel="noopener">네이버지도</a>
+        ${place.info ? `<a class="link" href="${place.info}" target="_blank" rel="noopener">관광 정보</a>` : ""}
+      `;
+    }
 
-  // 처음 열렸을 때 5개 핀이 전부 한 화면에 들어오도록 범위를 넉넉히 잡음
-  map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+    function markerIcon(place) {
+      const selected = place.id === selectedId ? " selected" : "";
+      return L.divIcon({
+        className:"",
+        html:`
+          <div class="marker-shell ${place.markerClass}${selected}">
+            <div class="pin">${place.no}</div>
+            <div class="label">${place.short}</div>
+          </div>
+        `,
+        iconSize:[170,64],
+        iconAnchor:[85,32]
+      });
+    }
 
-  function renderButtons() {
-    const wrap = document.getElementById('placeButtons');
-    wrap.innerHTML = '';
+    function renderFilters() {
+      filtersEl.innerHTML = "";
+      filters.forEach(filter => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "filter-btn" + (filter.key === currentFilter ? " active" : "");
+        btn.textContent = filter.label;
+        btn.addEventListener("click", () => {
+          currentFilter = filter.key;
+          selectedId = visiblePlaces()[0]?.id || selectedId;
+          renderAll();
+          setMapView();
+        });
+        filtersEl.appendChild(btn);
+      });
+    }
 
-    const allBtn = document.createElement('button');
-    allBtn.className = 'place-btn active';
-    allBtn.id = 'btn-all';
-    allBtn.textContent = '전체보기';
-    allBtn.addEventListener('click', showAll);
-    wrap.appendChild(allBtn);
+    function renderMarkers() {
+      markerLayer.clearLayers();
 
-    places.forEach(p => {
-      const btn = document.createElement('button');
-      btn.className = 'place-btn';
-      btn.id = 'btn-' + p.id;
-      btn.innerHTML = `<span class="dot" style="background:${p.color};"></span>${p.name}`;
-      btn.addEventListener('click', () => selectPlace(p.id));
-      wrap.appendChild(btn);
-    });
-  }
+      visiblePlaces().forEach(place => {
+        const marker = L.marker([place.displayLat || place.lat, place.displayLng || place.lng], {
+          icon: markerIcon(place),
+          keyboard:false
+        });
 
-  function showAll() {
-    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
-    document.querySelectorAll('.place-btn').forEach(b => b.classList.remove('active'));
-    const allBtn = document.getElementById('btn-all');
-    if (allBtn) allBtn.classList.add('active');
-  }
+        marker.on("click", () => selectPlace(place.id));
+        markerLayer.addLayer(marker);
+      });
+    }
 
-  function selectPlace(id) {
-    const p = places.find(pl => pl.id === id);
-    if (!p) return;
+    function renderCards() {
+      const selected = selectedPlace();
+      const sorted = [...visiblePlaces()].sort((a,b) => {
+        if (a.id === selected.id) return -1;
+        if (b.id === selected.id) return 1;
+        return a.no - b.no;
+      });
 
-    map.setView([p.lat, p.lng], 17);
-    const marker = markerById[id];
-    if (marker) marker.openPopup();
+      placeList.innerHTML = "";
 
-    document.querySelectorAll('.place-btn').forEach(b => b.classList.remove('active'));
-    const activeBtn = document.getElementById('btn-' + id);
-    if (activeBtn) activeBtn.classList.add('active');
-  }
+      sorted.forEach(place => {
+        const card = document.createElement("article");
+        card.className = "card" + (place.id === selected.id ? " selected" : "");
+        card.innerHTML = `
+          <div class="top">
+            <span class="card-num">${place.no}</span>
+            <div>
+              <h3 class="name">${place.name}</h3>
+              <p class="desc">${place.desc}</p>
+            </div>
+          </div>
+          <div class="btn-row">${linkButtons(place)}</div>
+        `;
+        card.addEventListener("click", () => selectPlace(place.id));
+        placeList.appendChild(card);
+      });
+    }
 
-  renderButtons();
-</script>
+    function selectPlace(id) {
+      selectedId = id;
+      renderAll();
+    }
 
+    function setMapView() {
+      if (!map) return;
+
+      if (currentFilter === "beach") {
+        map.setView([35.0758, 129.0208], 13, { animate:false });
+      } else if (currentFilter === "park") {
+        map.setView([35.0618, 129.0214], 13, { animate:false });
+      } else if (currentFilter === "view") {
+        map.setView([35.0692, 129.0213], 13, { animate:false });
+      } else {
+        map.setView([35.0689, 129.0208], 13, { animate:false });
+      }
+
+      setTimeout(() => map.invalidateSize(false), 100);
+    }
+
+    function lockMap() {
+      map.dragging.disable();
+      map.scrollWheelZoom.disable();
+      map.doubleClickZoom.disable();
+      map.touchZoom.disable();
+      map.boxZoom.disable();
+      map.keyboard.disable();
+
+      const el = map.getContainer();
+      el.addEventListener("wheel", e => e.preventDefault(), { passive:false });
+      el.addEventListener("dblclick", e => e.preventDefault());
+      el.addEventListener("touchmove", e => e.preventDefault(), { passive:false });
+    }
+
+    function renderAll() {
+      renderFilters();
+      renderMarkers();
+      renderCards();
+    }
+
+    function init() {
+      if (typeof L === "undefined") {
+        document.getElementById("loadError").style.display = "block";
+        return;
+      }
+
+      map = L.map("map", {
+        zoomControl:false,
+        attributionControl:true,
+        dragging:false,
+        scrollWheelZoom:false,
+        doubleClickZoom:false,
+        touchZoom:false,
+        boxZoom:false,
+        keyboard:false
+      });
+
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom:18,
+        attribution:"&copy; OpenStreetMap"
+      }).addTo(map);
+
+      markerLayer = L.layerGroup().addTo(map);
+
+      lockMap();
+      renderAll();
+      setMapView();
+
+      window.addEventListener("resize", setMapView);
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
 </body>
 </html>
